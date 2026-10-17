@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+export default async function Page({params}:{params:Promise<{programId:string}>}){const {programId}=await params;const p=await prisma.program.findUnique({where:{id:programId},include:{semesters:{include:{_count:{select:{subjects:true}}},orderBy:{number:"asc"}},department:true}});if(!p)notFound();return <main className="page"><div className="container"><p className="breadcrumb"><Link href="/">Repository</Link> / {p.name}</p><div className="topbar"><div><h1>{p.name}</h1><p className="muted">{p.department.name} · {p.type}</p></div></div><div className="grid">{p.semesters.map(s=><Link className="card" href={`/semester/${s.id}`} key={s.id}><span className="badge">Semester {s.number}</span><h3>Semester {s.number}</h3><p className="muted">{s._count.subjects} subjects</p><span className="btn">Browse subjects →</span></Link>)}</div></div></main>}

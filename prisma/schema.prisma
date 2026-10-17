@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProgramType {
+  REGULAR
+  INTEGRATED
+}
+
+enum StaffRole {
+  ADMIN
+  STAFF
+}
+
+enum ContentType {
+  QUESTION_PAPER
+  VIDEO_TUTORIAL
+  STUDY_MATERIAL
+  ASSIGNMENT
+  NOTES
+  OTHER
+}
+
+model Department {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  programs Program[]
+  createdAt DateTime @default(now())
+}
+
+model Program {
+  id String @id @default(cuid())
+  name String
+  type ProgramType
+  departmentId String
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  semesters Semester[]
+  staff Staff[]
+  createdAt DateTime @default(now())
+  @@unique([departmentId, type])
+}
+
+model Semester {
+  id String @id @default(cuid())
+  number Int
+  programId String
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  subjects Subject[]
+  createdAt DateTime @default(now())
+  @@unique([programId, number])
+}
+
+model Subject {
+  id String @id @default(cuid())
+  code String
+  name String
+  semesterId String
+  semester Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  assignments StaffSubject[]
+  contents Content[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([semesterId, code])
+}
+
+model Staff {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  role StaffRole @default(STAFF)
+  programId String
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  assignments StaffSubject[]
+  versions ContentVersion[] @relation("VersionUploader")
+  createdAt DateTime @default(now())
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model StaffSubject {
+  id           String   @id @default(cuid())
+  staffId      String
+  subjectId    String
+  academicYear String
+  assignedFrom DateTime @default(now())
+  assignedTo   DateTime?
+  isActive     Boolean  @default(true)
+
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, subjectId, academicYear])
+  @@index([subjectId, academicYear, isActive])
+}
+
+model Content {
+  id String @id @default(cuid())
+  title String
+  description String?
+  type ContentType
+  subjectId String
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  versions ContentVersion[]
+  isArchived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([subjectId, type])
+}
+
+model ContentVersion {
+  id String @id @default(cuid())
+  contentId String
+  versionNumber Int
+  fileName String
+  storageKey String @unique
+  mimeType String
+  sizeBytes Int
+  changeNote String?
+  uploadedById String
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  uploadedBy Staff @relation("VersionUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@unique([contentId, versionNumber])
+}
