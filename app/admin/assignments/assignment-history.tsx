@@ -10,6 +10,7 @@ type AssignmentRow = {
   subjectId: string;
   subjectCode: string;
   subjectName: string;
+  programName: string;
   subjectLabel: string;
   academicYear: string;
   isActive: boolean;
@@ -113,7 +114,7 @@ export default function AssignmentHistory({
                 <td>{a.staffName}</td>
 
                 <td>
-                  {a.subjectCode} — {a.subjectName}
+                  {a.programName} - {a.subjectCode} - {a.subjectName}
                 </td>
 
                 <td>{a.academicYear}</td>
@@ -164,7 +165,7 @@ export default function AssignmentHistory({
       {editing && (
         <div className="modal-backdrop" role="presentation">
           <section
-            className="form"
+            className="form edit-assignment-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-assignment-title"

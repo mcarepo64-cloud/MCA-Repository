@@ -63,6 +63,7 @@ export default async function Page() {
     subjectId: a.subjectId,
     subjectCode: a.subject.code,
     subjectName: a.subject.name,
+    programName: a.subject.semester.program.name,
     subjectLabel: `${a.subject.semester.program.name} / Sem ${a.subject.semester.number} / ${a.subject.code} — ${a.subject.name}`,
     academicYear: a.academicYear,
     isActive: a.isActive,

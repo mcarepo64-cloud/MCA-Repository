@@ -21,3 +21,27 @@
   overflow-y: auto;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
 }
+
+.edit-assignment-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-assignment-modal .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-assignment-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-assignment-modal .actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
