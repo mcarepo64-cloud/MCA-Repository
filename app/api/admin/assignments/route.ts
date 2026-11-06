@@ -45,11 +45,11 @@ async function validateTarget(staffId: string, subjectId: string) {
     return { error: "Subject not found." } as const;
   }
 
-  if (subject.semester.programId !== staff.programId) {
-    return {
-      error: "Staff and subject belong to different programmes.",
-    } as const;
-  }
+  // if (subject.semester.programId !== staff.programId) {
+  //   return {
+  //     error: "Staff and subject belong to different programmes.",
+  //   } as const;
+  // }
 
   return { staff, subject } as const;
 }

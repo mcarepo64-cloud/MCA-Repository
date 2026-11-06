@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==========================================
+// EXISTING ENUMS
+// ==========================================
+
 enum ProgramType {
   REGULAR
   INTEGRATED
@@ -26,72 +30,142 @@ enum ContentType {
   OTHER
 }
 
+// ==========================================
+// MOCK TEST ENUMS
+// ==========================================
+
+enum MockTestStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MockAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+enum QuestionSource {
+  MANUAL
+  AI
+  UPLOAD
+}
+
+enum QuestionStatus {
+  AVAILABLE
+  PENDING_REVIEW
+  ARCHIVED
+}
+
+enum MockTestMode {
+  RANDOM
+  FIXED
+}
+
+enum QuestionUploadStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ==========================================
+// EXISTING MODELS
+// ==========================================
+
 model Department {
-  id String @id @default(cuid())
-  code String @unique
-  name String
-  programs Program[]
-  createdAt DateTime @default(now())
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  programs  Program[]
+  createdAt DateTime  @default(now())
 }
 
 model Program {
-  id String @id @default(cuid())
-  name String
-  type ProgramType
+  id           String      @id @default(cuid())
+  name         String
+  type         ProgramType
   departmentId String
+
   department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
   semesters Semester[]
-  staff Staff[]
+  staff     Staff[]
+
   createdAt DateTime @default(now())
+
   @@unique([departmentId, type])
 }
 
 model Semester {
-  id String @id @default(cuid())
-  number Int
+  id        String @id @default(cuid())
+  number    Int
   programId String
+
   program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+
   subjects Subject[]
+
   createdAt DateTime @default(now())
+
   @@unique([programId, number])
 }
 
 model Subject {
-  id String @id @default(cuid())
-  code String
-  name String
+  id         String @id @default(cuid())
+  code       String
+  name       String
   semesterId String
+
   semester Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
   assignments StaffSubject[]
-  contents Content[]
+  contents    Content[]
+
+  // Mock Test relations
+  questionBankQuestions QuestionBankQuestion[]
+  questionUploadBatches QuestionUploadBatch[]
+  mockTests             MockTest[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@unique([semesterId, code])
 }
 
 model Staff {
-  id String @id @default(cuid())
-  name String
-  email String @unique
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
   passwordHash String
-  role StaffRole @default(STAFF)
+
+  role      StaffRole @default(STAFF)
   programId String
+
   program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+
   assignments StaffSubject[]
-  versions ContentVersion[] @relation("VersionUploader")
+  versions    ContentVersion[] @relation("VersionUploader")
+
+  // Mock Test relations
+  createdMockTests             MockTest[]
+  createdQuestionBankQuestions QuestionBankQuestion[] @relation("QuestionCreator")
+  uploadedQuestionBatches      QuestionUploadBatch[]  @relation("BatchUploader")
+
   createdAt DateTime @default(now())
+
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
 }
 
 model StaffSubject {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   staffId      String
   subjectId    String
   academicYear String
-  assignedFrom DateTime @default(now())
+  assignedFrom DateTime  @default(now())
   assignedTo   DateTime?
-  isActive     Boolean  @default(true)
+  isActive     Boolean   @default(true)
 
   staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -101,31 +175,287 @@ model StaffSubject {
 }
 
 model Content {
-  id String @id @default(cuid())
-  title String
+  id          String      @id @default(cuid())
+  title       String
   description String?
-  type ContentType
-  subjectId String
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  type        ContentType
+  subjectId   String
+
+  subject  Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   versions ContentVersion[]
+
   isArchived Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([subjectId, type])
 }
 
 model ContentVersion {
-  id String @id @default(cuid())
-  contentId String
+  id            String  @id @default(cuid())
+  contentId     String
   versionNumber Int
-  fileName String
-  storageKey String @unique
-  mimeType String
-  sizeBytes Int
-  changeNote String?
-  uploadedById String
+  fileName      String
+  storageKey    String  @unique
+  mimeType      String
+  sizeBytes     Int
+  changeNote    String?
+  uploadedById  String
+
   content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
   uploadedBy Staff @relation("VersionUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
+
   @@unique([contentId, versionNumber])
+}
+
+// ==========================================
+// QUESTION BANK UPLOAD BATCH
+// ==========================================
+
+model QuestionUploadBatch {
+  id           String @id @default(cuid())
+  subjectId    String
+  uploadedById String
+
+  fileName     String
+  totalRows    Int    @default(0)
+  successCount Int    @default(0)
+  failedCount  Int    @default(0)
+
+  status      QuestionUploadStatus @default(PROCESSING)
+  errorReport Json?
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  uploadedBy Staff @relation("BatchUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  questions QuestionBankQuestion[]
+
+  createdAt DateTime @default(now())
+
+  @@index([subjectId, createdAt])
+  @@index([uploadedById])
+}
+
+// ==========================================
+// QUESTION BANK
+// ==========================================
+
+model QuestionBankQuestion {
+  id            String  @id @default(cuid())
+  subjectId     String
+  createdById   String
+  uploadBatchId String?
+
+  questionText String
+  explanation  String?
+
+  marks        Int @default(1)
+  displayOrder Int @default(0)
+
+  source QuestionSource @default(MANUAL)
+  status QuestionStatus @default(AVAILABLE)
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  createdBy Staff @relation("QuestionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  uploadBatch QuestionUploadBatch? @relation(fields: [uploadBatchId], references: [id], onDelete: SetNull)
+
+  options QuestionBankOption[]
+
+  fixedTests MockTestQuestion[]
+
+  attemptSnapshots AttemptQuestion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId, status])
+  @@index([createdById])
+  @@index([uploadBatchId])
+  @@index([source, status])
+}
+
+// ==========================================
+// QUESTION BANK OPTIONS
+// ==========================================
+
+model QuestionBankOption {
+  id         String @id @default(cuid())
+  questionId String
+
+  optionText String
+  isCorrect  Boolean @default(false)
+  order      Int     @default(0)
+
+  question QuestionBankQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, order])
+}
+
+// ==========================================
+// MOCK TEST
+// ==========================================
+
+model MockTest {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  subjectId   String
+  createdById String?
+
+  mode MockTestMode @default(RANDOM)
+
+  durationMinutes Int
+  questionCount   Int
+
+  totalMarks   Int
+  passingMarks Int?
+
+  negativeMarks Float @default(0)
+
+  shuffleQuestions Boolean @default(true)
+  shuffleOptions   Boolean @default(true)
+
+  status MockTestStatus @default(DRAFT)
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  createdBy Staff? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  fixedQuestions MockTestQuestion[]
+  attempts       MockAttempt[]
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([subjectId, status])
+  @@index([createdById])
+  @@index([mode, status])
+}
+
+// ==========================================
+// FIXED TEST QUESTIONS
+// ==========================================
+
+model MockTestQuestion {
+  id         String @id @default(cuid())
+  testId     String
+  questionId String
+
+  order Int @default(0)
+
+  test MockTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  question QuestionBankQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([testId, questionId])
+  @@index([testId, order])
+}
+
+// ==========================================
+// MOCK TEST ATTEMPTS
+// ==========================================
+
+model MockAttempt {
+  id     String @id @default(cuid())
+  testId String
+
+  participantName  String?
+  participantEmail String?
+
+  status MockAttemptStatus @default(IN_PROGRESS)
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  expiresAt   DateTime?
+
+  totalMarks    Int
+  obtainedMarks Float @default(0)
+
+  test MockTest @relation(fields: [testId], references: [id], onDelete: Restrict)
+
+  questions AttemptQuestion[]
+  answers   MockAnswer[]
+
+  @@index([testId, status])
+  @@index([participantEmail])
+  @@index([startedAt])
+}
+
+// ==========================================
+// ATTEMPT QUESTION SNAPSHOTS
+// ==========================================
+
+model AttemptQuestion {
+  id             String  @id @default(cuid())
+  attemptId      String
+  bankQuestionId String?
+
+  questionText String
+  explanation  String?
+
+  marks Int
+  order Int @default(0)
+
+  attempt MockAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  bankQuestion QuestionBankQuestion? @relation(fields: [bankQuestionId], references: [id], onDelete: SetNull)
+
+  options AttemptOption[]
+  answer  MockAnswer?
+
+  @@unique([attemptId, order])
+  @@index([bankQuestionId])
+}
+
+// ==========================================
+// ATTEMPT OPTION SNAPSHOTS
+// ==========================================
+
+model AttemptOption {
+  id                String @id @default(cuid())
+  attemptQuestionId String
+
+  optionText String
+  isCorrect  Boolean
+  order      Int     @default(0)
+
+  question AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+
+  selectedBy MockAnswer[] @relation("AttemptSelectedOption")
+
+  @@index([attemptQuestionId, order])
+}
+
+// ==========================================
+// MOCK TEST ANSWERS
+// ==========================================
+
+model MockAnswer {
+  id                String @id @default(cuid())
+  attemptId         String
+  attemptQuestionId String @unique
+
+  selectedOptionId String?
+
+  isCorrect    Boolean?
+  marksAwarded Float     @default(0)
+  evaluatedAt  DateTime?
+
+  attempt MockAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  question AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+
+  selectedOption AttemptOption? @relation("AttemptSelectedOption", fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@unique([attemptId, attemptQuestionId])
+  @@index([selectedOptionId])
 }

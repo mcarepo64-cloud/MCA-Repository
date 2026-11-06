@@ -69,6 +69,7 @@ export default async function Page() {
     isActive: a.isActive,
     assignedFrom: a.assignedFrom.toISOString(),
     assignedTo: a.assignedTo?.toISOString() ?? null,
+    sem: a.subject.semester.number,
   }));
 
   return (

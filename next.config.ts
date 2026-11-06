@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   poweredByHeader: false,
   // The upload API applies its own 50 MB limit. Keep this setting explicit so
   // deployment reviewers can see the intended Server Action body limit too.

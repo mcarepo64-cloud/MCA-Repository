@@ -58,7 +58,7 @@ export default function StaffForm({
   }
 
   return (
-    <form className="form" onSubmit={submit}>
+    <form className="form" onSubmit={submit}  autoComplete="off">
       <h2 style={{ margin: 0 }}>Create staff account</h2>
 
       {err && <div className="error">{err}</div>}
@@ -71,21 +71,27 @@ export default function StaffForm({
         </div>
 
         <div className="field">
-          <label>Email</label>
-          <input name="email" type="email" required />
-        </div>
-      </div>
+  <label htmlFor="staff-email">Staff Email</label>
+  <input
+    id="staff-email"
+    name="email"
+    type="email"
+    autoComplete="off"
+    required
+  />
+</div>
 
-      <div className="two-col">
-        <div className="field">
-          <label>Temporary password</label>
-          <input
-            name="password"
-            type="password"
-            minLength={8}
-            required
-          />
-        </div>
+<div className="field">
+  <label htmlFor="staff-password">Temporary Password</label>
+  <input
+    id="staff-password"
+    name="password"
+    type="password"
+    minLength={8}
+    autoComplete="new-password"
+    required
+  />
+</div>
 
         <div className="field">
           <label>Programme</label>

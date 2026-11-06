@@ -37,25 +37,47 @@ export async function createSession(staffId: string) {
 
 export async function getCurrentStaff() {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
+
   if (!token) return null;
+
   try {
     const { payload } = await jwtVerify(token, getSecret(), {
       issuer: TOKEN_ISSUER,
       audience: TOKEN_AUDIENCE,
       algorithms: ["HS256"],
     });
-    if (!payload.staffId || typeof payload.staffId !== "string") return null;
-    // Role and active assignments are always read from the database, not trusted from JWT claims.
-    return await prisma.staff.findUnique({
+
+    if (
+      !payload.staffId ||
+      typeof payload.staffId !== "string" ||
+      payload.sub !== payload.staffId
+    ) {
+      return null;
+    }
+
+    const staff = await prisma.staff.findUnique({
       where: { id: payload.staffId },
       include: {
         program: true,
         assignments: {
-          where: { isActive: true, assignedTo: null },
-          include: { subject: { include: { semester: true } } },
+          where: {
+            isActive: true,
+            assignedTo: null,
+          },
+          include: {
+            subject: {
+              include: {
+                semester: true,
+              },
+            },
+          },
         },
       },
     });
+
+    if (!staff || staff.isDeleted) return null;
+
+    return staff;
   } catch {
     return null;
   }
@@ -68,5 +90,6 @@ export async function logout() {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 0,
+    expires: new Date(0),
   });
 }

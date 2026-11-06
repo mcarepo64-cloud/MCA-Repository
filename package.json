@@ -15,17 +15,27 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.2",
+    "csv-parse": "^7.0.3",
     "jose": "^6.1.0",
+    "jspdf": "^4.2.1",
     "next": "^15.5.4",
+    "pdfkit": "^0.20.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/pdfkit": "^0.17.7",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "prisma": "^6.19.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.3": true
   }
 }

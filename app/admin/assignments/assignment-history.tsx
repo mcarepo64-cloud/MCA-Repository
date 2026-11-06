@@ -16,6 +16,7 @@ type AssignmentRow = {
   isActive: boolean;
   assignedFrom: string;
   assignedTo: string | null;
+  sem: number;
 };
 
 export default function AssignmentHistory({
@@ -114,7 +115,7 @@ export default function AssignmentHistory({
                 <td>{a.staffName}</td>
 
                 <td>
-                  {a.programName} - {a.subjectCode} - {a.subjectName}
+                  {a.programName} - Sem {a.sem} - {a.subjectCode} - {a.subjectName} 
                 </td>
 
                 <td>{a.academicYear}</td>
