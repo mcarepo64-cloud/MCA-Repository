@@ -28,3 +28,6 @@ Thumbs.db
 *.db
 *.dump
 *.bak
+
+# Uploaded files
+/storage/
