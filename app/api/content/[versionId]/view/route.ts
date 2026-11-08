@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ version
   const contentType = inlineTypes.has(version.mimeType) ? version.mimeType : "application/octet-stream";
   try {
     const bytes = await readStoredFile(version.storageKey);
-    return new Response(bytes, {
+    return new Response(Uint8Array.from(bytes).buffer, {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": inlineTypes.has(version.mimeType) ? "inline" : "attachment",

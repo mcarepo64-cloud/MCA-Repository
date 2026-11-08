@@ -31,3 +31,20 @@ Thumbs.db
 
 # Uploaded files
 /storage/
+
+# Local safety backups
+*.local-backup
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Temporary Supabase migration verification files
+complete-schema-diff.sql
+content-versions.sql
+migration-verification.sql
+missing-file-check.sql
+supabase-schema-check.sql
+
+# Temporary storage migration scripts
+scripts/check-supabase-storage.ts
+scripts/migrate-storage-to-supabase.ts

@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ version
   try {
     const bytes = await readStoredFile(version.storageKey);
     const safeName = version.fileName.replace(/[\r\n"\\]/g, "_");
-    return new Response(bytes, {
+    return new Response(Uint8Array.from(bytes).buffer, {
       headers: {
         "Content-Type": version.mimeType || "application/octet-stream",
         "Content-Disposition": `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(version.fileName)}`,
